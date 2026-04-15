@@ -1,0 +1,153 @@
+{
+  "workflow": {
+    "name": "SaaS Onboarding Email Sequence — v2",
+    "description": "Automated 14-day onboarding sequence triggered on new account creation. Sends 6 emails at key intervals with milestone check logic.",
+    "type": "CONTACT_BASED",
+    "trigger": {
+      "type": "CONTACT_PROPERTY_CHANGE",
+      "property": "account_created",
+      "value": "true"
+    },
+    "enrollment_criteria": {
+      "filter_groups": [
+        {
+          "filters": [
+            {
+              "property": "lifecycle_stage",
+              "operator": "EQ",
+              "value": "customer"
+            },
+            {
+              "property": "onboarding_complete",
+              "operator": "NEQ",
+              "value": "true"
+            }
+          ]
+        }
+      ]
+    },
+    "actions": [
+      {
+        "step": 1,
+        "type": "SEND_EMAIL",
+        "delay_days": 0,
+        "email_id": "WELCOME_DAY0",
+        "description": "Welcome email — sent immediately on account creation"
+      },
+      {
+        "step": 2,
+        "type": "SEND_EMAIL",
+        "delay_days": 1,
+        "email_id": "CORE_FEATURE_DAY1",
+        "description": "Core feature walkthrough"
+      },
+      {
+        "step": 3,
+        "type": "SEND_EMAIL",
+        "delay_days": 3,
+        "email_id": "TEAM_INVITE_DAY3",
+        "description": "Team invite prompt"
+      },
+      {
+        "step": 4,
+        "type": "IF_THEN_BRANCH",
+        "delay_days": 5,
+        "description": "Check if core milestone completed",
+        "condition": {
+          "property": "core_milestone_completed",
+          "operator": "EQ",
+          "value": "true"
+        },
+        "if_true": {
+          "action": "CONTINUE_TO_STEP_5"
+        },
+        "if_false": {
+          "action": "SEND_EMAIL",
+          "email_id": "MILESTONE_NUDGE",
+          "description": "Gentle reminder to complete setup"
+        }
+      },
+      {
+        "step": 5,
+        "type": "SEND_EMAIL",
+        "delay_days": 7,
+        "email_id": "CHECKIN_DAY7",
+        "description": "7-day check-in with milestone review"
+      },
+      {
+        "step": 6,
+        "type": "CREATE_TASK",
+        "delay_days": 7,
+        "description": "CSM task: review client progress manually",
+        "task": {
+          "subject": "Review onboarding progress — {{company_name}}",
+          "owner": "assigned_csm",
+          "priority": "MEDIUM",
+          "due_in_days": 1
+        }
+      },
+      {
+        "step": 7,
+        "type": "IF_THEN_BRANCH",
+        "delay_days": 8,
+        "description": "Churn risk detection",
+        "condition": {
+          "property": "milestones_completed",
+          "operator": "LT",
+          "value": "4"
+        },
+        "if_true": {
+          "action": "CREATE_TASK",
+          "task": {
+            "subject": "CHURN RISK — Immediate outreach needed: {{company_name}}",
+            "owner": "assigned_csm",
+            "priority": "HIGH",
+            "due_in_days": 0
+          }
+        },
+        "if_false": {
+          "action": "CONTINUE"
+        }
+      },
+      {
+        "step": 8,
+        "type": "SEND_EMAIL",
+        "delay_days": 10,
+        "email_id": "ADVANCED_FEATURE_DAY10",
+        "description": "Advanced feature unlock"
+      },
+      {
+        "step": 9,
+        "type": "SEND_EMAIL",
+        "delay_days": 14,
+        "email_id": "ACTIVATION_NPS_DAY14",
+        "description": "Activation confirmation + NPS survey"
+      },
+      {
+        "step": 10,
+        "type": "SET_PROPERTY",
+        "delay_days": 14,
+        "description": "Mark onboarding sequence as complete",
+        "property": "onboarding_sequence_complete",
+        "value": "true"
+      }
+    ],
+    "goal": {
+      "description": "Contact has fully activated",
+      "condition": {
+        "property": "onboarding_complete",
+        "operator": "EQ",
+        "value": "true"
+      }
+    },
+    "suppression_list": "Unsubscribed Contacts",
+    "settings": {
+      "send_on_weekdays_only": true,
+      "sending_window": {
+        "start": "09:00",
+        "end": "17:00",
+        "timezone": "contact_timezone"
+      }
+    }
+  }
+}
